@@ -16,23 +16,23 @@ class TeacherTopicRequest
      */
     private const DEFAULT_TOP_COUNT = 3;
 
-    #[Assert\NotBlank]
-    #[Assert\Type("array")]
-    #[Assert\All([
-        new Assert\Type(type: "integer"),
-        new Assert\Positive(),
-    ])]
-    private array $topics;
-
     /**
-     * @param array<string, int> $topics
+     * array<string, int>
      */
-    public function __construct(array $topics)
-    {
-        $this->topics = $topics;
+    public function __construct(
+        #[Assert\NotBlank]
+        #[Assert\Type("array")]
+        #[Assert\All([
+            new Assert\Type(type: "integer"),
+            new Assert\Positive(),
+        ])]
+        private array $topics
+    ) {
     }
 
     /**
+     * Get all topics
+     *
      * @return array<string, int>
      */
     public function getTopics(): array
@@ -71,7 +71,18 @@ class TeacherTopicRequest
      */
     public static function validateKeys(self $object, ExecutionContextInterface $context): void
     {
-        foreach (array_keys($object->topics) as $key) {
+        $requiredKeys = TopicEnum::cases();
+        $topicKeys = array_keys($object->topics);
+
+        foreach ($requiredKeys as $requiredKey) {
+            if (!in_array($requiredKey->value, $topicKeys, true)) {
+                $context->buildViolation(sprintf('The key "%s" is missing from topics.', $requiredKey->value))
+                    ->atPath('topics')
+                    ->addViolation();
+            }
+        }
+
+        foreach ($topicKeys as $key) {
             if (!TopicEnum::isValid($key)) {
                 $context->buildViolation(sprintf('The topic "%s" is not valid.', $key))
                     ->atPath("topics[$key]")

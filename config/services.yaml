@@ -23,10 +23,23 @@ services:
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
 
+    # Controllers
     App\Controller\:
         resource: '../src/Controller'
         tags: ['controller.service_arguments']
 
+    # Repositories
     App\Repository\ProviderRepository:
         arguments:
             $filePath: '%kernel.project_dir%/config/provider_topics.json'
+
+    # Strategies
+    App\Strategy\OneTopicStrategy: ~
+    App\Strategy\TwoTopicsStrategy: ~
+
+    # QuoteCalculationService
+    App\Service\QuoteCalculationService:
+        arguments:
+            $strategies:
+                - '@App\Strategy\TwoTopicsStrategy'
+                - '@App\Strategy\OneTopicStrategy'

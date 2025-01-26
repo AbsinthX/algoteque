@@ -4,29 +4,28 @@ namespace App\Service;
 
 use App\Repository\ProviderRepository;
 
-class ProviderMatchingService
+readonly class ProviderMatchingService
 {
-    private ProviderRepository $repository;
-
-    public function __construct(ProviderRepository $repository)
+    public function __construct(private ProviderRepository $repository)
     {
-        $this->repository = $repository;
     }
 
-    public function matchProviders(array $topics): array
+    /**
+     * Match providers topics
+     *
+     * @param array $teacherTopics
+     * @return array
+     */
+    public function matchTopics(array $teacherTopics): array
     {
-        $providers = $this->repository->getProviders();
         $matches = [];
-
-        foreach ($providers as $provider => $providerTopics) {
-            $providerTopicsArray = explode('+', $providerTopics);
-            $commonTopics = array_intersect(array_keys($topics), $providerTopicsArray);
-
-            if (count($commonTopics) > 0) {
-                $matches[$provider] = $commonTopics;
+        foreach ($this->repository->getProviders() as $provider => $topics) {
+            $providerTopics = explode('+', $topics);
+            $matchingTopics = array_intersect(array_keys($teacherTopics), $providerTopics);
+            if (!empty($matchingTopics)) {
+                $matches[$provider] = array_values($matchingTopics);
             }
         }
-
         return $matches;
     }
 }

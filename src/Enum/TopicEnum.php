@@ -2,6 +2,9 @@
 
 namespace App\Enum;
 
+/**
+ * Enum with all possible topics
+ */
 enum TopicEnum: string
 {
     case MATH = 'math';

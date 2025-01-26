@@ -11,26 +11,35 @@ class ProviderRepository
     {
     }
 
+    /**
+     * Return providers
+     *
+     * @return array
+     */
     public function getProviders(): array
     {
         $decodedData = $this->loadConfigurationFile();
         return $decodedData[self::PROVIDER_TOPICS_KEY] ?? [];
     }
 
-    public function getTopicsByProvider(string $provider): ?string
-    {
-        $providers = $this->getProviders();
-        return $providers[$provider] ?? null;
-    }
-
+    /**
+     * Get providers from JSON file
+     *
+     * @return array
+     */
     private function loadConfigurationFile(): array
     {
+        // If cached data is already available, return it to avoid reading the file again.
         if ($this->cachedData !== null) {
             return $this->cachedData;
         }
 
         if (!file_exists($this->filePath)) {
             throw new \RuntimeException("The configuration file does not exist: {$this->filePath}");
+        }
+
+        if (!is_readable($this->filePath)) {
+            throw new \RuntimeException("The configuration file is not readable: {$this->filePath}");
         }
 
         $fileContents = file_get_contents($this->filePath);
@@ -50,6 +59,7 @@ class ProviderRepository
             ));
         }
 
+        // Cache the decoded data to avoid repeated file and JSON parsing operations.
         $this->cachedData = $decodedData;
 
         return $this->cachedData;
