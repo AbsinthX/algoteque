@@ -134,3 +134,38 @@ Given more time, I would:
 * Implement detailed error logging for easier debugging.
 * Add an API documentation tool like Swagger to describe available endpoints.
 * Expand test coverage to include more edge cases and integration scenarios.
+
+
+# Improvements after feedback
+
+I've added a comment explaining the use of constructor property promotion in: <br>
+[ProviderRepository.php](src/Repository/ProviderRepository.php)
+
+
+I've also improved validation and added logging in: <br>
+[QuoteController.php](src/Controller/QuoteController.php)
+
+Also I've changed route to be more specific:
+/api/quotes/v1/calculate
+
+Additionally, I've introduced error codes and fixed status codes in responses.
+I’ve used the standard log file to record any errors occurring in the API, along with all request details.
+In a real project, I would configure Monolog to log errors to a separate file.
+
+Screenshots from the working API and error handling:
+
+### Success:<br>
+![Image](https://github.com/user-attachments/assets/49d6d612-67ee-4b2b-96d3-c38350e3a861)
+
+### Wrong method:<br>
+![Image](https://github.com/user-attachments/assets/e53d0823-e0a6-445e-906e-2d0bfb928bd1)
+
+### Wrong format or empty request:<br>
+![Image](https://github.com/user-attachments/assets/d1934b77-afc8-4a1e-9af2-58c51197b691)
+![Image](https://github.com/user-attachments/assets/6db047b0-0b44-4017-8b85-d2d880bf60da)
+
+### Validation errors:<br>
+![Image](https://github.com/user-attachments/assets/c62a5783-834e-4924-9b56-cbadb22fb621)
+
+### Log file:<br>
+![Image](https://github.com/user-attachments/assets/c78fa507-2d6e-4c4b-8538-c3a9cf95a88a)

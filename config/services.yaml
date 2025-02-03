@@ -37,6 +37,11 @@ services:
     App\Strategy\OneTopicStrategy: ~
     App\Strategy\TwoTopicsStrategy: ~
 
+    # Listeners
+    App\EventListener\ApiResponseListener:
+        tags:
+            - { name: kernel.event_listener, event: kernel.response, method: onKernelResponse }
+
     # QuoteCalculationService
     App\Service\QuoteCalculationService:
         arguments:

@@ -7,6 +7,19 @@ class ProviderRepository
     private const PROVIDER_TOPICS_KEY = 'provider_topics';
     private ?array $cachedData = null;
 
+    /**
+     * This constructor utilizes constructor property promotion, a feature introduced in PHP 8.0.
+     * This is the same as:
+     *
+     * private string $filePath;
+     *
+     * public function __construct(string $filePath)
+     * {
+     *     $this->filePath = $filePath;
+     * }
+     * The file path is defined in services.yaml - line 34
+     * @see config/services.yaml
+     */
     public function __construct(private readonly string $filePath)
     {
     }

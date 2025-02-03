@@ -13,6 +13,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 /**
  * Controller responsible for generating quotes based on input data.
  */
+#[Route('/quotes', name: 'quotes_')]
 readonly class QuoteController
 {
     /**
@@ -29,44 +30,61 @@ readonly class QuoteController
     }
 
     /**
-     * Handles a POST request to the `/quote` endpoint to generate quotes based on teacher's input data.
+     * Handles a POST request to the `/calculate` endpoint to generate quotes based on teacher's input data.
      *
      * Process:
-     * - Validates that the request contains the correct `Content-Type` header (`application/json`).
-     * - Decodes JSON data from the request body.
-     * - Validates the data structure using the `TeacherTopicRequest` object.
-     * - Matches providers based on teacher topics.
-     * - Calculates quotes based on matches and input data.
+     * - Validates the `Content-Type` header (`application/json`). Returns `415 Unsupported Media Type` if invalid.
+     * - Decodes JSON from the request body. Returns `400 Bad Request` for malformed or empty JSON.
+     * - Validates the request structure using `TeacherTopicRequest` and Symfony's validator.
+     * - If validation fails, returns `422 Unprocessable Entity` with error details.
+     * - Extracts top topics and finds matching providers.
+     * - Calculates quotes based on the matched providers and topics.
      *
      * @Route("/quote", name="get_quote", methods={"POST"})
      *
      * @param Request $request
      *
-     * @return JsonResponse Returns a JSON response with the following data:
-     * - `toptopics`: List of top topics provided.
-     * - `matches`: Matched providers for the topics.
-     * - `quotes`: Generated quotes based on the matches.
-     * - In case of an error, returns an `error` key with the appropriate message.
+     * @return JsonResponse Returns a JSON response with the following structure:
+     * - `toptopics`: List of validated top topics.
+     * - `matches`: List of matched providers.
+     * - `quotes`: Generated quotes.
+     * - In case of an error, the response includes an `error` key with details.
      *
-     * @throws \JsonException
-     * @throws \InvalidArgumentException
-     * @throws \Throwable
+     * Error handling:
+     * - `415 Unsupported Media Type` – Invalid `Content-Type` (must be `application/json`).
+     * - `400 Bad Request` – Invalid JSON format.
+     * - `422 Unprocessable Entity` – Validation errors.
+     * - `500 Internal Server Error` – Unexpected system errors.
+     *
+     * @throws \JsonException If JSON decoding fails.
+     * @throws \InvalidArgumentException For invalid argument processing.
+     * @throws \Throwable For unexpected errors.
      */
-    #[Route('/quote', name: 'get_quote', methods: ['POST'])]
+    #[Route('/v1/calculate', name: 'calculate', methods: ['POST'])]
     public function getQuote(Request $request): JsonResponse
     {
         try {
-            if (!$request->headers->contains('Content-Type', 'application/json')) {
-                return new JsonResponse(['error' => 'Invalid Content-Type. Expected application/json.'], 400);
+            if ($request->headers->get('Content-Type') !== 'application/json') {
+                return new JsonResponse([
+                    'error' => 'Invalid Content-Type. Expected application/json.',
+                    'code' => 'ERR_INVALID_CONTENT_TYPE'
+                ], 415);
             }
 
             $data = json_decode($request->getContent(), true);
 
             if ($data === null) {
-                return new JsonResponse(['error' => 'Invalid JSON payload.'], 400);
+                return new JsonResponse([
+                    'error' => 'Invalid JSON payload.',
+                    'code' => 'ERR_INVALID_JSON',
+                    'details' => 'Malformed JSON or empty request body.'
+                ], 400);
             }
             if (!is_array($data['topics'] ?? null)) {
-                return new JsonResponse(['error' => 'Invalid "topics" format. Expected an array.'], 400);
+                return new JsonResponse([
+                    'error' => 'Invalid "topics" format. Expected an array.',
+                    'code' => 'ERR_INVALID_TOPICS_FORMAT'
+                ], 422);
             }
 
             $teacherRequest = new TeacherTopicRequest($data['topics']);
@@ -76,7 +94,11 @@ readonly class QuoteController
                 foreach ($errors as $error) {
                     $errorMessages[] = $error->getPropertyPath() . ': ' . $error->getMessage();
                 }
-                return new JsonResponse(['error' => $errorMessages], 400);
+                return new JsonResponse([
+                    'error' => 'Validation failed.',
+                    'code' => 'ERR_VALIDATION_FAILED',
+                    'details' => $errorMessages
+                ], 422);
             }
 
             $toptopics = $teacherRequest->getTopTopics();
@@ -90,13 +112,20 @@ readonly class QuoteController
             ]);
 
         } catch (\JsonException $e) {
-            return new JsonResponse(['error' => 'Invalid JSON format.'], 400);
+            return new JsonResponse([
+                'error' => 'Invalid JSON format.',
+                'code' => 'ERR_JSON_EXCEPTION'
+            ], 400);
         } catch (\InvalidArgumentException $e) {
-            return new JsonResponse(['error' => $e->getMessage()], 400);
+            return new JsonResponse([
+                'error' => $e->getMessage(),
+                'code' => 'ERR_INVALID_ARGUMENT'
+            ], 422);
         } catch (\Throwable $e) {
             return new JsonResponse([
                 'error' => 'An unexpected error occurred.',
                 'details' => $e->getMessage(),
+                'code' => 'ERR_INTERNAL_SERVER_ERROR'
             ], 500);
         }
     }
